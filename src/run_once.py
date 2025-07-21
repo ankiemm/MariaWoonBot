@@ -2,7 +2,11 @@ import os, sqlite3, asyncio, aiohttp, logging
 from selectolax.parser import HTMLParser as Soup
 from telegram import Bot
 
-os.makedirs("data", exist_ok=True)   # ← voeg deze regel toe
+# maak /data mapje aan
+ROOT = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(ROOT, "..", "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, "seen.db")
 
 URL        = "https://www.dehuissleutel.nl/nl/aanbod"
 CARD_CSS   = ".card.card--withFooter"
@@ -11,7 +15,7 @@ LINK_CSS   = "a"
 TOKEN   = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
-DB = sqlite3.connect("data/seen.db")
+DB = sqlite3.connect(DB_PATH)
 DB.execute("CREATE TABLE IF NOT EXISTS seen (url TEXT PRIMARY KEY)")
 
 logging.basicConfig(level=logging.INFO)
