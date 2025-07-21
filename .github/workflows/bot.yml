@@ -1,22 +1,41 @@
 name: mariawoonbot
-
 on:
   schedule:
-    - cron: "*/5 * * * *"     # elke 5 min
-  workflow_dispatch:           # handmatig starten kan ook
+    - cron: "*/5 * * * *"      # elke 5 min
+  workflow_dispatch:
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # ↓ ❶ download eerder opgeslagen DB (als die er al is)
+      - name: Restore DB
+        uses: actions/download-artifact@v4
+        with:
+          name: seen-db
+          path: data
+        continue-on-error: true     # eerste run heeft nog geen artifact
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install deps
         run: pip install -r requirements.txt
+
       - name: Run scraper once
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID:        ${{ secrets.CHAT_ID }}
         run: python src/run_once.py
+
+      # ↓ ❷ sla de (aangepaste) DB weer op voor de volgende run
+      - name: Save DB
+        if: always()               # voer ook uit als er geen nieuwe woningen waren
+        uses: actions/upload-artifact@v4
+        with:
+          name: seen-db
+          path: data/seen.db
+          retention-days: 90       # standaard; kun je zo laten
