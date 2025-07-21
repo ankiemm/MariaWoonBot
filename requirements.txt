@@ -1,0 +1,4 @@
+aiohttp==3.9.1
+selectolax==0.3.19
+python-telegram-bot[asyncio]==20.7
+PyYAML==6.0

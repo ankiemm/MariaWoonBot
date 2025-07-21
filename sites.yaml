@@ -1,0 +1,4 @@
+- name: huissleutel
+  url:  https://www.dehuissleutel.nl/nl/aanbod
+  card_css: .card.card--withFooter
+  link_css: a
