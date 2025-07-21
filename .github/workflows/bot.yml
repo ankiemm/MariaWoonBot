@@ -2,22 +2,24 @@ name: mariawoonbot
 
 on:
   schedule:
-    - cron: "*/5 * * * *"       # ← 2 spaties vóór ‘schedule’, 4 vóór ‘-’
+    - cron: "*/5 * * * *"      # elke 5 min (UTC, kan 1‑10 min variëren)
   workflow_dispatch:
 
 jobs:
-  check:
+  scrape:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      # ↓ ❶ download eerder opgeslagen DB (als die er al is)
+      # — 1.  DB terugzetten (indien aanwezig) —
       - name: Restore DB
-        uses: actions/download-artifact@v4
+        id: restore_db
+        uses: actions/cache@v4
         with:
-          name: seen-db
-          path: data
-        continue-on-error: true     # eerste run heeft nog geen artifact
+          path: data/seen.db
+          key: huizenbot-db          # constant key  → 1 cache voor alle runs
+        continue-on-error: true      # eerste run heeft nog niets
 
       - uses: actions/setup-python@v5
         with:
@@ -30,13 +32,14 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID:        ${{ secrets.CHAT_ID }}
-        run: python src/run_once.py
+        run: |
+          mkdir -p data          # verzeker mapje voor het eerst
+          python src/run_once.py
 
-      # ↓ ❷ sla de (aangepaste) DB weer op voor de volgende run
+      # — 2.  DB opslaan voor volgende run —
       - name: Save DB
-        if: always()               # voer ook uit als er geen nieuwe woningen waren
-        uses: actions/upload-artifact@v4
+        if: always()             # ook uitvoeren als er geen nieuwe woningen waren
+        uses: actions/cache/save@v4
         with:
-          name: seen-db
           path: data/seen.db
-          retention-days: 90       # standaard; kun je zo laten
+          key: huizenbot-db
