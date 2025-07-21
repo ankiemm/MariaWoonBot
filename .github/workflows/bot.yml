@@ -2,7 +2,7 @@ name: Huizenbot
 
 on:
   schedule:
-    - cron: "*/5 * * * *"          # elke 5 min (UTC)
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -11,16 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ensure data dir exists          # ⬅︎ nieuw
-        run: mkdir -p data
-
-      - name: Download seen.db
-        id: get_db
-        uses: actions/download-artifact@v4
+      # 1 ─ Maak data-map, herstel cache
+      - name: Restore seen.db from cache
+        id: cache
+        uses: actions/cache@v4
         with:
-          name: seen-db
-          path: data
-        continue-on-error: true      # géén fout als hij er nog niet is
+          path: data/seen.db
+          key: huizenbot-db         # één vaste sleutel
 
       - uses: actions/setup-python@v5
         with:
@@ -34,14 +31,13 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID:        ${{ secrets.CHAT_ID }}
         run: |
-          mkdir -p data                     # zorg dat mapje bestaat
+          mkdir -p data
           python src/run_once.py
 
-      # 2 ── upload / overschrijf de database
-      - name: Upload seen.db
-        if: always()                        # voer ook uit als er geen nieuwe woningen waren
-        uses: actions/upload-artifact@v4
+      # 2 ─ Cache bijwerken met nieuwe DB
+      - name: Save seen.db to cache
+        if: always()
+        uses: actions/cache/save@v4
         with:
-          name: seen-db
           path: data/seen.db
-          retention-days: 90
+          key: huizenbot-db
