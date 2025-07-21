@@ -11,7 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1 ── haal de database op (als die er al is)
+      - name: Ensure data dir exists          # ⬅︎ nieuw
+        run: mkdir -p data
+
       - name: Download seen.db
         id: get_db
         uses: actions/download-artifact@v4
