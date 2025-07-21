@@ -1,6 +1,7 @@
 import os, sqlite3, asyncio, aiohttp, logging
 from selectolax.parser import HTMLParser as Soup
 from telegram import Bot
+
 os.makedirs("data", exist_ok=True)   # ← voeg deze regel toe
 
 URL        = "https://www.dehuissleutel.nl/nl/aanbod"
