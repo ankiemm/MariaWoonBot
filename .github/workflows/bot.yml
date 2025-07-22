@@ -2,7 +2,7 @@ name: Huizenbot
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/5 * * * *"  # elke 5 min (UTC)
   workflow_dispatch:
 
 jobs:
@@ -11,13 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1 ─ Maak data-map, herstel cache
+      # 1 ─ Restore database uit cache (laatste succesvolle run)
       - name: Restore seen.db from cache
-        id: cache
+        id: restore_db
         uses: actions/cache@v4
         with:
           path: data/seen.db
-          key: huizenbot-db         # één vaste sleutel
+          # unieke sleutel per run, maar zelfde prefix zodat de laatste versie gevonden wordt
+          key: huizenbot-db-${{ github.run_id }}
+          restore-keys: |
+            huizenbot-db-
 
       - uses: actions/setup-python@v5
         with:
@@ -31,13 +34,13 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID:        ${{ secrets.CHAT_ID }}
         run: |
-          mkdir -p data
+          mkdir -p data            # verzeker dat mapje bestaat
           python src/run_once.py
 
-      # 2 ─ Cache bijwerken met nieuwe DB
+      # 2 ─ Sla de bijgewerkte DB opnieuw op in de cache
       - name: Save seen.db to cache
         if: always()
         uses: actions/cache/save@v4
         with:
           path: data/seen.db
-          key: huizenbot-db
+          key: huizenbot-db-${{ github.run_id }}
